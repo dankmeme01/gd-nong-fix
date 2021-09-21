@@ -80,6 +80,7 @@ int main(int argc, const char** argv) {
 	fs::path path = fs::path(filename);
 	if (!fs::exists(path)) {
 		std::cerr << "File was not found by given path: " << filename << std::endl;
+		system("pause");
 		return 1;
 	}
 
@@ -108,6 +109,7 @@ int main(int argc, const char** argv) {
 	}
 	catch (std::exception& e) {
 		std::cout << "An error has occured: " << e.what() << std::endl;
+		system("pause");
 		return 1;
 	}
 }
