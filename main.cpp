@@ -1,6 +1,6 @@
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #ifdef _DEBUG
-#define _DEFAULT_FILENAME "C:\\Users\\User\\Downloads\\piggies.mp3"
+#define _DEFAULT_FILENAME L"C:\\Users\\User\\Downloads\\piggies.mp3"
 #endif
 
 #include <filesystem>
@@ -37,7 +37,7 @@ int startup(LPCWSTR lpApplicationName, LPWSTR args)
 	return res;
 }
 
-int applyFix(fs::path original, fs::path newloc, const char *argv) {
+int applyFix(fs::path original, fs::path newloc, const wchar_t *argv) {
 	if (original == newloc) {
 		size_t lastindex = original.string().find_last_of(".");
 		std::string rawname = original.string().substr(0, lastindex);
@@ -46,13 +46,13 @@ int applyFix(fs::path original, fs::path newloc, const char *argv) {
 	}
 
 	const fs::path ffmpegargv = fs::path(argv).parent_path() / "ffmpeg.exe";
-	if (!fs::exists(ffmpegargv)) throw std::runtime_error("Could not find ffmpeg by path " + ffmpegargv.string());
+	if (!fs::exists(ffmpegargv)) throw nong_exception(L"Could not find ffmpeg by path " + ffmpegargv.wstring());
 
-	const std::string command = "\"" + ffmpegargv.string() + "\" -i \"" + original.string() + "\" -vn \"" + newloc.string() + "\"";
+	const std::wstring args = L"\"" + ffmpegargv.wstring() + L"\" -i \"" + original.wstring() + L"\" -vn \"" + newloc.wstring() + L"\"";
 
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 	std::wstring poo = converter.from_bytes(ffmpegargv.string());
-	std::wstring args = converter.from_bytes(command);
+	//std::wstring args = converter.from_bytes(command);
 
 	int res = startup(poo.c_str(), (LPWSTR)args.c_str());
 	if (res == 0) {
@@ -63,8 +63,8 @@ int applyFix(fs::path original, fs::path newloc, const char *argv) {
 	return res;
 }
 
-int main(int argc, const char** argv) {
-	std::string filename;
+int wmain(int argc, const wchar_t** argv) {
+	std::wstring filename;
 	
 #ifdef _DEFAULT_FILENAME
 	filename = _DEFAULT_FILENAME;
@@ -74,17 +74,20 @@ int main(int argc, const char** argv) {
 	}
 	else {
 		std::cout << "Enter path to the .mp3 file: ";
-		getline(std::cin, filename);
+		getline(std::wcin, filename);
+		if (filename.at(0) == L'"' && filename.at(filename.size()-1) == L'"') {
+			filename = filename.substr(1, filename.size()-2);
+		}
 	}
 #endif
-	fs::path path = fs::path(filename);
+	fs::path path = fs::absolute(fs::path(filename));
 	if (!fs::exists(path)) {
-		std::cerr << "File was not found by given path: " << filename << std::endl;
+		std::wcerr << L"File was not found by given path: " << path.wstring() << std::endl;
 		system("pause");
 		return 1;
 	}
 
-	std::ifstream file(fs::absolute(path).string());
+	std::ifstream file(path);
 	unsigned char buffer[3];
 
 	file.read((char*)&buffer[0], sizeof(buffer));
@@ -109,6 +112,11 @@ int main(int argc, const char** argv) {
 	}
 	catch (std::exception& e) {
 		std::cout << "An error has occured: " << e.what() << std::endl;
+		system("pause");
+		return 1;
+	}
+	catch (nong_exception& e) {
+		std::wcout << L"An error has occured: " << e.msg() << std::endl;
 		system("pause");
 		return 1;
 	}
